@@ -181,6 +181,38 @@ test('Invalid signature', function (t) {
 	});
 });
 
+test('No body-parser is used', function (t) {
+	t.plan(2);
+	/**
+	 * Create mock express app
+	 */
+	let webhookHandler = GithubWebHook({path: '/github/hook', secret: 'secret'});
+	let app = express();
+	app.use(webhookHandler); // use our middleware
+	app.use(function(req, res) {
+		res.status(200).send({message: 'Here'});
+		t.fail(true, 'should not reach here');
+	});
+
+	let invalidSignature = 'signature';
+
+	request(app)
+		.post('/github/hook')
+		.set('Content-Type', 'application/json')
+		.set('X-GitHub-Delivery', 'id')
+		.set('X-GitHub-Event', 'event')
+		.set('X-Hub-Signature', invalidSignature)
+		.expect('Content-Type', /json/)
+		.expect(400)
+		.end(function(err, res) {
+			t.deepEqual(res.body, {error: 'Make sure body-parser is used'}, 'Verify use of body-parser');
+		});
+
+	webhookHandler.on('error', function(err, req, res) {
+		t.ok(err, 'error caught');
+	});
+});
+
 test('Accept a valid request with json data', function (t) {
 	t.plan(8);
 	/**
