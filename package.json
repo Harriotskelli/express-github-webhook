@@ -1,8 +1,8 @@
 {
   "name": "express-github-webhook",
   "version": "1.0.0",
-  "description": "A Node.js handler for Github Webhook",
-  "main": "express-gtihub-webhook.js",
+  "description": "A Express middleware for handle Github Webhooks",
+  "main": "index.js",
   "scripts": {
     "test": "node test/index | tap-spec"
   },
