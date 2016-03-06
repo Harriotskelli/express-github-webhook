@@ -5,9 +5,7 @@
  */
 const EventEmitter = require('events').EventEmitter;
 const crypto = require('crypto');
-const bl = require('bl');
 const bufferEq = require('buffer-equal-constant-time');
-const queryString = require('querystring');
 
 /**
  * Helper functions
@@ -68,42 +66,27 @@ var GithubWebhook = function(options) {
 			return reportError('No signature found in the request');
 		}
 
-		req.pipe(
-			bl(function(err, data) {
-				if (err) {
-					return reportError(err.message);
-				}
+		if (!req.body) {
+			return reportError('Make sure body-parser is used');
+		}
 
-				// verify data with secret (if any)
-				if (options.secret && !verifySignature(options.secret, data, sign)) {
-					return reportError('Failed to verify signature');
-				}
+		// verify signature (if any_
+		if (options.secret && !verifySignature(options.secret, JSON.stringify(req.body), sign)) {
+			return reportError('Failed to verify signature');
+		}
 
-				// parse payload
-				let dataString = data.toString();
-				let payload;
-				if (req.headers['content-type'] === 'application/x-www-form-urlencoded') {
-					dataString = queryString.parse(dataString).payload;
-				}
+		// parse payload
+		let payloadData = req.body;
+		const repo = payloadData.repository.name;
 
-				try {
-					payload = JSON.parse(dataString);
-				} catch (e) {
-					return reportError(e.message);
-				}
+		// emit events
+		githookHandler.emit('*', event, repo, payloadData);
+		githookHandler.emit(event, repo, payloadData);
+		githookHandler.emit(repo, event, payloadData);
 
-				const repo = payload.repository.name;
-
-				// emit events
-				githookHandler.emit('*', event, repo, payload);
-				githookHandler.emit(event, repo, payload);
-				githookHandler.emit(repo, event, payload);
-
-				res.status(200).send({
-					success: true
-				});
-			})
-		);
+		res.status(200).send({
+			success: true
+		});
 	}
 };
 
