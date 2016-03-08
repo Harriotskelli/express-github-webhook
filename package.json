@@ -3,6 +3,7 @@
   "version": "1.0.3",
   "description": "A Express middleware for handle Github Webhooks",
   "main": "index.js",
+  "repository": "Gisonrg/express-github-webhook",
   "scripts": {
     "test": "node test/index | tap-spec"
   },
