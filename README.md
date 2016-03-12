@@ -16,7 +16,7 @@ To Use:
 
 ```javascript
 var GithubWebHook = require('express-github-webhook');
-var hookHandler = GithubWebHook({ path: '/webhook', secret: 'secret' });
+var webhookHandler = GithubWebHook({ path: '/webhook', secret: 'secret' });
 
 // use in your express app
 let app = express();
