@@ -70,7 +70,7 @@ var GithubWebhook = function(options) {
 			return reportError('Make sure body-parser is used');
 		}
 
-		// verify signature (if any_
+		// verify signature (if any)
 		if (options.secret && !verifySignature(options.secret, JSON.stringify(req.body), sign)) {
 			return reportError('Failed to verify signature');
 		}
