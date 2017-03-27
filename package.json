@@ -1,6 +1,6 @@
 {
   "name": "express-github-webhook",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "description": "A Express middleware for handle Github Webhooks",
   "main": "index.js",
   "repository": "Gisonrg/express-github-webhook",
