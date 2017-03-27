@@ -18,7 +18,7 @@ function verifySignature(secret, data, signature) {
 	return bufferEq(new Buffer(signature), new Buffer(signData(secret, data)));
 }
 
-var GithubWebhook = function(options) {
+const GithubWebhook = function(options) {
 	if (typeof options !== 'object') {
 		throw new TypeError('must provide an options object');
 	}
