@@ -77,12 +77,14 @@ var GithubWebhook = function(options) {
 
 		// parse payload
 		let payloadData = req.body;
-		const repo = payloadData.repository.name;
+		const repo = payloadData.repository && payloadData.repository.name;
 
 		// emit events
 		githookHandler.emit('*', event, repo, payloadData);
 		githookHandler.emit(event, repo, payloadData);
-		githookHandler.emit(repo, event, payloadData);
+		if (repo) {
+			githookHandler.emit(repo, event, payloadData);
+		}
 
 		res.status(200).send({
 			success: true
