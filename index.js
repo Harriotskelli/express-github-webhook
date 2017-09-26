@@ -30,7 +30,7 @@ const GithubWebhook = function(options) {
 	options.secret = options.secret || '';
 
 	// Make handler able to emit events
-	Object.setPrototypeOf(githookHandler, EventEmitter.prototype);
+	Object.assign(githookHandler, EventEmitter.prototype);
 	EventEmitter.call(githookHandler);
 
 	return githookHandler;
