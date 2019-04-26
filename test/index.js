@@ -11,6 +11,10 @@ function signData(secret, data) {
 	return 'sha1=' + crypto.createHmac('sha1', secret).update(data).digest('hex');
 }
 
+function customSign(secret, data) {
+	return 'custom=' + crypto.createHmac('sha256', secret).update(data).digest('hex');
+}
+
 test('Invalid construction of GithubWebHook handler', function (t) {
 	t.plan(4);
 	t.equal(typeof GithubWebHook, 'function', 'GithubWebHook exports a function');
@@ -266,5 +270,144 @@ test('Accept a valid request with json data', function (t) {
 		t.equal(event, 'push', 'receive a push event on event \'*\'');
 		t.equal(repo, 'repo', 'receive a event for repo on event \'*\'');
 		t.deepEqual(data, data, 'receive correct data on event \'*\'');
+	});
+});
+
+test('Custom headers', function(t) {
+	t.plan(4);
+	/**
+	 * Create mock express app
+	 */
+	let webhookHandler = GithubWebHook({
+		path: '/github/hook',
+		secret: 'secret',
+		deliveryHeader: 'x-my-delivery',
+		eventHeader: 'x-my-event',
+		signatureHeader: 'x-my-signature'
+	});
+	let app = express();
+	app.use(bodyParser.json());
+	app.use(webhookHandler); // use our middleware
+	app.use(function(req, res) {
+		res.status(200).send({message: 'Here'});
+		t.fail(true, 'should not reach here');
+	});
+
+	/**
+	 * Mock request data
+	 */
+	var data = {
+		ref: 'ref',
+		foo: 'bar',
+		repository: {
+			name: 'repo'
+		}
+	};
+	var json = JSON.stringify(data);
+
+	request(app)
+		.post('/github/hook')
+		.send(json)
+		.set('Content-Type', 'application/json')
+		.set('X-My-Delivery', 'id')
+		.set('X-My-Event', 'push')
+		.set('X-My-Signature', signData('secret', json))
+		.expect('Content-Type', /json/)
+		.expect(200)
+		.end(function(err, res) {
+			t.deepEqual(res.body, {success:true}, 'accept valid json request');
+		});
+
+	webhookHandler.on('*', function(event, repo, data) {
+		t.equal(event, 'push', 'receive a push event on event \'*\'');
+		t.equal(repo, 'repo', 'receive a event for repo on event \'*\'');
+		t.deepEqual(data, data, 'receive correct data on event \'*\'');
+	});
+})
+
+test('Custom signature function', function(t) {
+	t.plan(4);
+	/**
+	 * Create mock express app
+	 */
+	let webhookHandler = GithubWebHook({
+		path: '/github/hook',
+		secret: 'secret',
+		signData: customSign
+	});
+	let app = express();
+	app.use(bodyParser.json());
+	app.use(webhookHandler); // use our middleware
+	app.use(function(req, res) {
+		res.status(200).send({message: 'Here'});
+		t.fail(true, 'should not reach here');
+	});
+
+	/**
+	 * Mock request data
+	 */
+	var data = {
+		ref: 'ref',
+		foo: 'bar',
+		repository: {
+			name: 'repo'
+		}
+	};
+	var json = JSON.stringify(data);
+
+	request(app)
+		.post('/github/hook')
+		.send(json)
+		.set('Content-Type', 'application/json')
+		.set('X-GitHub-Delivery', 'id')
+		.set('X-GitHub-Event', 'push')
+		.set('X-Hub-Signature', customSign('secret', json))
+		.expect('Content-Type', /json/)
+		.expect(200)
+		.end(function(err, res) {
+			t.deepEqual(res.body, {success:true}, 'accept valid json request');
+		});
+
+	webhookHandler.on('*', function(event, repo, data) {
+		t.equal(event, 'push', 'receive a push event on event \'*\'');
+		t.equal(repo, 'repo', 'receive a event for repo on event \'*\'');
+		t.deepEqual(data, data, 'receive correct data on event \'*\'');
+	});
+})
+
+test('Invalid signature with custom signature function', function (t) {
+	t.plan(2);
+	/**
+	 * Create mock express app
+	 */
+	let webhookHandler = GithubWebHook({
+		path: '/github/hook',
+		secret: 'secret',
+		signData: customSign
+	});
+	let app = express();
+	app.use(bodyParser.json());
+	app.use(webhookHandler); // use our middleware
+	app.use(function(req, res) {
+		res.status(200).send({message: 'Here'});
+		t.fail(true, 'should not reach here');
+	});
+
+	let invalidSignature = 'signature';
+
+	request(app)
+		.post('/github/hook')
+		.set('Content-Type', 'application/json')
+		.set('X-GitHub-Delivery', 'id')
+		.set('X-GitHub-Event', 'event')
+		.set('X-Hub-Signature', invalidSignature)
+		.expect('Content-Type', /json/)
+		.expect(400)
+		.end(function(err, res) {
+			t.deepEqual(res.body, {error: 'Failed to verify signature'}, 'signature does not match');
+		});
+
+	webhookHandler.on('error', function(err, req, res) {
+		t.ok(err, 'error caught');
 	});
 });

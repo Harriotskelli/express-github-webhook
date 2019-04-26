@@ -14,7 +14,7 @@ function signData(secret, data) {
 	return 'sha1=' + crypto.createHmac('sha1', secret).update(data).digest('hex');
 }
 
-function verifySignature(secret, data, signature) {
+function verifySignature(secret, data, signature, signData) {
 	return bufferEq(new Buffer(signature), new Buffer(signData(secret, data)));
 }
 
@@ -28,6 +28,10 @@ const GithubWebhook = function(options) {
 	}
 
 	options.secret = options.secret || '';
+	options.deliveryHeader = options.deliveryHeader || 'x-github-delivery';
+	options.eventHeader = options.eventHeader || 'x-github-event';
+	options.signatureHeader = options.signatureHeader || 'x-hub-signature';
+	options.signData = options.signData || signData;
 
 	// Make handler able to emit events
 	Object.assign(githookHandler, EventEmitter.prototype);
@@ -51,17 +55,17 @@ const GithubWebhook = function(options) {
 		}
 
 		// check header fields
-		let id = req.headers['x-github-delivery'];
+		let id = req.headers[options.deliveryHeader];
 		if (!id) {
 			return reportError('No id found in the request');
 		}
 
-		let event = req.headers['x-github-event'];
+		let event = req.headers[options.eventHeader];
 		if (!event) {
 			return reportError('No event found in the request');
 		}
 
-		let sign = req.headers['x-hub-signature'] || '';
+		let sign = req.headers[options.signatureHeader] || '';
 		if (options.secret && !sign) {
 			return reportError('No signature found in the request');
 		}
@@ -71,7 +75,7 @@ const GithubWebhook = function(options) {
 		}
 
 		// verify signature (if any)
-		if (options.secret && !verifySignature(options.secret, JSON.stringify(req.body), sign)) {
+		if (options.secret && !verifySignature(options.secret, JSON.stringify(req.body), sign, options.signData)) {
 			return reportError('Failed to verify signature');
 		}
 
