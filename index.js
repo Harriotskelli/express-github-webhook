@@ -15,7 +15,7 @@ function signData(secret, data) {
 }
 
 function verifySignature(secret, data, signature, signData) {
-	return bufferEq(new Buffer(signature), new Buffer(signData(secret, data)));
+	return bufferEq(new Buffer.from(signature), new Buffer.from(signData(secret, data)));
 }
 
 const GithubWebhook = function(options) {
@@ -79,16 +79,19 @@ const GithubWebhook = function(options) {
 			return reportError('Failed to verify signature');
 		}
 
-		// parse payload
+		// parse payload 
 		let payloadData = req.body;
-		const repo = payloadData.repository && payloadData.repository.name;
+
+		// was parsing repo id here when it was just for github
+		// var repo = payloadData.repository && payloadData.repository.name;
 
 		// emit events
-		githookHandler.emit('*', event, repo, payloadData);
-		githookHandler.emit(event, repo, payloadData);
-		if (repo) {
-			githookHandler.emit(repo, event, payloadData);
-		}
+		githookHandler.emit('*', event, payloadData);
+		githookHandler.emit(event, payloadData);
+
+		// if (repo) {
+		// 	githookHandler.emit(repo, event, payloadData);
+		// }
 
 		res.status(200).send({
 			success: true

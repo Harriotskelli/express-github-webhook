@@ -218,7 +218,7 @@ test('No body-parser is used', function (t) {
 });
 
 test('Accept a valid request with json data', function (t) {
-	t.plan(8);
+	t.plan(3);
 	/**
 	 * Create mock express app
 	 */
@@ -256,25 +256,25 @@ test('Accept a valid request with json data', function (t) {
 			t.deepEqual(res.body, {success:true}, 'accept valid json request');
 		});
 
-	webhookHandler.on('repo', function(event, data) {
-		t.equal(event, 'push', 'receive a push event on event \'repo\'');
-		t.deepEqual(data, data, 'receive correct data on event \'repo\'');
-	});
+	// webhookHandler.on('repo', function(event, data) {
+	// 	t.equal(event, 'push', 'receive a push event on event \'repo\'');
+	// 	t.deepEqual(data, data, 'receive correct data on event \'repo\'');
+	// });
 
-	webhookHandler.on('push', function(repo, data) {
-		t.equal(repo, 'repo', 'receive a event for repo on event \'push\'');
-		t.deepEqual(data, data, 'receive correct data on event \'push\'');
-	});
+	// webhookHandler.on('push', function(data) {
+	// 	t.equal(repo, 'repo', 'receive a event for repo on event \'push\'');
+	// 	t.deepEqual(data, data, 'receive correct data on event \'push\'');
+	// });
 
-	webhookHandler.on('*', function(event, repo, data) {
+	webhookHandler.on('*', function(event, data) {
 		t.equal(event, 'push', 'receive a push event on event \'*\'');
-		t.equal(repo, 'repo', 'receive a event for repo on event \'*\'');
+		// t.equal(repo, 'repo', 'receive a event for repo on event \'*\'');
 		t.deepEqual(data, data, 'receive correct data on event \'*\'');
 	});
 });
 
 test('Custom headers', function(t) {
-	t.plan(4);
+	t.plan(3);
 	/**
 	 * Create mock express app
 	 */
@@ -320,13 +320,13 @@ test('Custom headers', function(t) {
 
 	webhookHandler.on('*', function(event, repo, data) {
 		t.equal(event, 'push', 'receive a push event on event \'*\'');
-		t.equal(repo, 'repo', 'receive a event for repo on event \'*\'');
+		// t.equal(repo, 'repo', 'receive a event for repo on event \'*\'');
 		t.deepEqual(data, data, 'receive correct data on event \'*\'');
 	});
 })
 
 test('Custom signature function', function(t) {
-	t.plan(4);
+	t.plan(3);
 	/**
 	 * Create mock express app
 	 */
@@ -370,7 +370,7 @@ test('Custom signature function', function(t) {
 
 	webhookHandler.on('*', function(event, repo, data) {
 		t.equal(event, 'push', 'receive a push event on event \'*\'');
-		t.equal(repo, 'repo', 'receive a event for repo on event \'*\'');
+		// t.equal(repo, 'repo', 'receive a event for repo on event \'*\'');
 		t.deepEqual(data, data, 'receive correct data on event \'*\'');
 	});
 })
